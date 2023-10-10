@@ -38,6 +38,3 @@ print("It works!")
 ```
 
 first collaboration on a document!
-
->>>>>>> 51bb93bcb5cbd995a20b8aa3ac2553f8f32d1b36
-
