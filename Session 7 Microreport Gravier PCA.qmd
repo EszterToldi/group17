@@ -25,6 +25,7 @@ editor: visual
 library(tidyverse)
 library(broom)
 library(patchwork)
+library(ggrepel)
 ```
 
 
@@ -72,7 +73,7 @@ gravier_PCA <- gravier_x |>
 
 Selecting by is.numeric has retained all columns, as expected, and they have been centered around 0 and scaled to have a standard deviation of 1. PCA was performed.
 
-#Plot PCA coordinates
+#Plot PCA projection onto first 2 principle components
 
 ```{r}
 
@@ -94,5 +95,67 @@ gravier_PCA |>
     y = "PC2",
     colour = "Prognosis")
   
+```
+
+#Plot rotation matrix
+
+
+With arrange() we can order a tibble rows according to the column values (order() can only be used on dataframes). We subset the gene expressions because otherwise the plot will not be readable, and take only the top 10 genes that have the greatest effect on the principal components, calculating it by adding the principal direction values (eigenvectors). 
+
+```{r}
+gravier_PCA |> 
+  tidy(matrix = "rotation")
+
+
+#define arrow style
+arrow_style <- arrow(
+  angle = 20, ends = "first", type = "closed", length = grid::unit(8, "pt")
+)
+
+#plot
+gravier_rotation <- gravier_PCA |> 
+  tidy(matrix = "rotation") |> 
+  pivot_wider(names_from = "PC", names_prefix = "PC", values_from = "value") 
+  gravier_rotation |> 
+    arrange(PC1+PC2,decreasing=TRUE) |> 
+    head(n=10) |> 
+  ggplot(aes(PC1, PC2)) +
+  geom_segment(xend = 0, yend = 0, arrow = arrow_style) +
+  geom_text_repel(
+    aes(label = column),
+    hjust = 1, nudge_x = -0.02, 
+    color = "4682B4"
+  ) +
+  xlim(-0.085,0.01) + ylim(-0.07, 0.01) +
+  coord_fixed() + # fix aspect ratio to 1:1
+  theme_minimal()
+```
+
+#variance explained
+
+We extract the eigenvalues for calculating the variance explained by each principle component.
+We can see right away that even our first principle component can only explain around 8 percent of the data's variability. we would need 77 principal components to explain 90 % of the variability, which is a substantial reduction in dimensions as compared to several thousands, however it does not make our data easier to plot. 
+
+```{r}
+
+gravier_PCA |> 
+  tidy(matrix = "eigenvalues")
+```
+
+Now we plot the variance explained.
+
+```{r}
+gravier_PCA |> 
+  tidy(matrix = "eigenvalues") |> 
+  head(n=10) |> 
+  ggplot(aes(PC, percent)) +
+  geom_col(fill = "blue", alpha = 0.8) +
+  scale_x_continuous(breaks = 1:9) +
+  scale_y_continuous(
+    labels = scales::percent_format(),
+    expand = expansion(mult = c(0, 0.01))
+  ) +
+  theme_minimal()+
+  labs(title = "Variance explained by first 10 principal components")
 ```
 
