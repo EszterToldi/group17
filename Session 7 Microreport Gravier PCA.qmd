@@ -24,27 +24,71 @@ editor: visual
 ```{r}
 library(tidyverse)
 library(broom)
+library(patchwork)
 ```
 
 
 #Load gravier dataset 
+
+We load the gravier dataset and extract x as tibble. This contains the gene expression values which are all numeric and can be used for PCA. We also create a tibble combining the gene expressions and the prognosis early_metastasis for later use.
+
 ```{r}
 #| label: load data
 
-raw_dir <- "data/_raw/"
+data_dir <- "data/"
 data_file <- "gravier.RData"
 data_loc <- "https://github.com/ramhiser/datamicroarray/raw/master/data/"
 
-if( !dir.exists(raw_dir) ){
-  dir.create(path = raw_dir)
+if( !dir.exists(data_dir) ){
+  dir.create(path = data_dir)
 }
-if( !file.exists(str_c(raw_dir, data_file)) ){
+if( !file.exists(str_c(data_dir, data_file)) ){
   download.file(
     url = str_c(data_loc, data_file),
-    destfile = str_c(raw_dir, data_file))
+    destfile = str_c(data_dir, data_file))
 }
-load(file = str_c(raw_dir, data_file))
+load(file = str_c(data_dir, data_file))
+
+gravier_x <- gravier$x |>
+  as_tibble()
+
+gravier_all <- gravier |> 
+  bind_cols() |>
+  as_tibble() |> 
+  relocate(early_metastasis = y)
 ```
 
-#Tidy 
+
+#PCA
+
+```{r}
+
+gravier_PCA <- gravier_x |> 
+  select(where(is.numeric)) |>
+  scale() |> 
+  prcomp()
+
+```
+
+Selecting by is.numeric has retained all columns, as expected, and they have been centered around 0 and scaled to have a standard deviation of 1. PCA was performed.
+
+#Plot PCA coordinates
+
+```{r}
+
+gravier_PCA |> 
+  augment(gravier_all) |> 
+  ggplot(aes(.fittedPC1, 
+             .fittedPC2, 
+             color = early_metastasis)
+         ) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c(poor = "#D55E00", 
+               good = "#0072B2")
+    ) +
+  theme(axis.line.x.top = element_blank(), 
+              axis.line.y.right = element_blank())+
+  theme_classic()
+```
 
