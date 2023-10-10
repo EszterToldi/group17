@@ -15,16 +15,13 @@ y <- c(3,213,2,312,3,213,12)
 exp(x) + exp(y)
 ```
 
-<<<<<<< HEAD
 ## s232970
-=======
 ```{r}
 print("It works!")
 ```
 
 first collaboration on a document!
 
->>>>>>> 51bb93bcb5cbd995a20b8aa3ac2553f8f32d1b36
 
 #New Analysis
 
@@ -34,4 +31,3 @@ hello some very serious work is done here
 sample(11) |> 
   summary()
 ```
-...
