@@ -12,6 +12,10 @@ Quarto enables you to weave together content and executable code into a finished
 
 When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
 
+```         
+usethis::use_git_config(user.name = "gwq445", user.email = "jtran262@gmail.com")
+```
+
 ```{r}
 1 + 1
 ```
