@@ -87,8 +87,12 @@ gravier_PCA |>
     values = c(poor = "#D55E00", 
                good = "#0072B2")
     ) +
-  theme(axis.line.x.top = element_blank(), 
-              axis.line.y.right = element_blank())+
-  theme_classic()
+  theme_light()+
+  labs(
+    title = "Projection onto two first Principle Components",
+    x = "PC1",
+    y = "PC2",
+    colour = "Prognosis")
+  
 ```
 
