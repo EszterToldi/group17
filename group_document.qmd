@@ -25,3 +25,13 @@ print("It works!")
 first collaboration on a document!
 
 >>>>>>> 51bb93bcb5cbd995a20b8aa3ac2553f8f32d1b36
+
+#New Analysis
+
+hello some very serious work is done here
+
+```{r}
+sample(11) |> 
+  summary()
+```
+...
