@@ -6,7 +6,7 @@ editor: visual
 
 ## s230339
 
-SOme text 123 123 321
+Some text 123 123 321
 
 ```{r}
 x <- c(35,1,23,12,312,31,231)
