@@ -10,3 +10,9 @@ editor: visual
 
 ## s232970
 
+```{r}
+print("It works!")
+```
+
+first collaboration on a document!
+
