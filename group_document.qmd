@@ -14,6 +14,19 @@ y <- c(3,213,2,312,3,213,12)
 
 exp(x) + exp(y)
 ```
+## *new analysis*
+
+*some code and some text*
+
+```{r}
+c <- c()
+for( i in 1:10){
+  c[i] <- i
+  print(c)
+}
+```
+
+
 
 ## s232970
 ```{r}
