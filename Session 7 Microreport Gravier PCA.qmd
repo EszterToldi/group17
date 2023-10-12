@@ -4,8 +4,7 @@ format: html
 editor: visual
 ---
 
-## Session 2 Microreport: Gavier dataset PCA
-
+## Session 2 Microreport: Gravier dataset PCA
 
 #Group 17 members:
 
@@ -19,8 +18,8 @@ editor: visual
 
 -   Tran, John Vinh Quang (s230339)
 
-
 #Load packages
+
 ```{r}
 library(tidyverse)
 library(broom)
@@ -28,10 +27,9 @@ library(patchwork)
 library(ggrepel)
 ```
 
+#Load gravier dataset
 
-#Load gravier dataset 
-
-We load the gravier dataset and extract x as tibble. This contains the gene expression values which are all numeric and can be used for PCA. We also create a tibble combining the gene expressions and the prognosis early_metastasis for later use.
+We load the gravier dataset and extract x as a tibble. This contains the gene expression values which are all numeric and can be used for PCA. We also create a tibble combining the gene expressions and the prognosis early_metastasis for later use.
 
 ```{r}
 #| label: load data
@@ -59,8 +57,9 @@ gravier_all <- gravier |>
   relocate(early_metastasis = y)
 ```
 
-
 #PCA
+
+To make sure that we use numerical data, we select only the numeric columns. As expected, the number of columns is the same as before (2905 columns). With scale() we now center all column data around 0 and scale them to have a standard deviation of 1, so that the magnitude of the column values does not introduce a bias in the PCA directions. Now the dataset is ready for analysis and we perform PCA with the function prcomp().
 
 ```{r}
 
@@ -71,9 +70,11 @@ gravier_PCA <- gravier_x |>
 
 ```
 
-Selecting by is.numeric has retained all columns, as expected, and they have been centered around 0 and scaled to have a standard deviation of 1. PCA was performed.
-
 #Plot PCA projection onto first 2 principle components
+
+The function augment() takes the PCA dataset and the full original dataset with the prognosis information and adds columns with data computed during PCA. In this case these are the projections of each data point onto the principle components, which was computed by multiplying each original data point with the eigenvector corresponding to each principle component. The output of the function is a tibble similar to gravier_all but with all projections (fittedPC1, fittedPC2, ...) added as columns at the end of the dataset
+
+We now use the projections onto the first two principle components as x and y for a scatterplot and color the points according to prognosis. If the two first principle components are able to separate the dataset according to prognosis, we should see two distinct clouds of data points.
 
 ```{r}
 
@@ -97,10 +98,11 @@ gravier_PCA |>
   
 ```
 
+We can see that the first two principle components are unable to separate the two prognosis classes.
+
 #Plot rotation matrix
 
-
-With arrange() we can order a tibble rows according to the column values (order() can only be used on dataframes). We subset the gene expressions because otherwise the plot will not be readable, and take only the top 10 genes that have the greatest effect on the principal components, calculating it by adding the principal direction values (eigenvectors). 
+We now extract the rotation matrix from gravier_PCA with the tidy() function, which returns a tibble. We transform the tibble with pivot_wide to have one column for each PCs and one row for each gene. However, if we try to plot now, we see a big smudge of color in the plot and nothing else, as we have 2905 genes of which the eigenvectors are plotted. To make a readable plot, we have to reduce the amount of genes we show and subset them. We decided to only take the top 10 genes that have the greatest effect on the principal components, calculating them by adding the principal direction values (eigenvectors). We can use arrange(), which orders tibble rows according to the column values (order() can only be used on dataframes), and take the head(n=10) rows.
 
 ```{r}
 gravier_PCA |> 
@@ -131,10 +133,9 @@ gravier_rotation <- gravier_PCA |>
   theme_minimal()
 ```
 
-#variance explained
+#Variance explained
 
-We extract the eigenvalues for calculating the variance explained by each principle component.
-We can see right away that even our first principle component can only explain around 8 percent of the data's variability. we would need 77 principal components to explain 90 % of the variability, which is a substantial reduction in dimensions as compared to several thousands, however it does not make our data easier to plot. 
+We extract the eigenvalues for calculating the variance explained by each principle component. We can see right away that even the first principle component can only explain around 8 percent of the data's variability. We would need at least 77 principal components to explain 90 % of the variability, which is a substantial reduction in dimensions as compared to several thousands, however it does not make our data easier to plot.
 
 ```{r}
 
@@ -150,7 +151,7 @@ gravier_PCA |>
   head(n=10) |> 
   ggplot(aes(PC, percent)) +
   geom_col(fill = "blue", alpha = 0.8) +
-  scale_x_continuous(breaks = 1:9) +
+  scale_x_continuous(breaks = 1:10) +
   scale_y_continuous(
     labels = scales::percent_format(),
     expand = expansion(mult = c(0, 0.01))
@@ -159,3 +160,4 @@ gravier_PCA |>
   labs(title = "Variance explained by first 10 principal components")
 ```
 
+We can see that no single principle component explains a majority of the data variance.
