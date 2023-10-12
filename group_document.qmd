@@ -1,0 +1,67 @@
+---
+title: "Group Document"
+format: html
+editor: visual
+---
+
+# s230339
+
+Some text 123 123 321
+fdlksafsdf
+
+
+```{r}
+x <- c(35,1,23,12,312,31,231)
+y <- c(3,213,2,312,3,213,12)
+
+wop <- data.frame(fake  = exp(x) + exp(y),
+           real = exp(x) - exp(y))
+
+wop
+```
+### New analysis
+
+*Some text part 2* **and some code**
+
+```{r}
+c <- c()
+for (i in 1:10){
+  c[i] <- i
+  print(c)
+} 
+
+```
+## *new analysis*
+
+*some code and some text*
+
+```{r}
+c <- c()
+for( i in 1:10){
+  c[i] <- i
+  print(c)
+}
+```
+
+
+
+## s232970
+```{r}
+print("It works!")
+```
+
+<<<<<<< HEAD
+first collaboration on a document!
+
+
+#New Analysis
+
+hello some very serious work is done here
+
+```{r}
+sample(11) |> 
+  summary()
+```
+=======
+first collaboration on a document!
+>>>>>>> a762340b6f7129e8ab2c1e387d48eea9700b563a

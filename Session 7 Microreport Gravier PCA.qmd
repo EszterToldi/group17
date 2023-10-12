@@ -1,0 +1,162 @@
+---
+title: "Session 7 Microreport: Gravier dataset PCA"
+format: html
+editor: visual
+---
+
+## Group 17 members:
+
+-   Meineche, Josefine Tvermoes (s233776)
+
+-   Slidsborg, Carina (s236244)
+
+-   Thuesen, Esben Rahbek (s223102)
+
+-   Toldi, Eszter Virág (s232970)
+
+-   Tran, John Vinh Quang (s230339)
+
+## Load packages
+
+```{r}
+library(tidyverse)
+library(broom)
+library(patchwork)
+library(ggrepel)
+```
+
+## Load gravier dataset
+
+We load the gravier dataset and extract x as a tibble. This contains the gene expression values which are all numeric and can be used for PCA. We also create a tibble combining the gene expressions and the prognosis early_metastasis for later use.
+
+```{r}
+#| label: load data
+
+data_dir <- "data/"
+data_file <- "gravier.RData"
+data_loc <- "https://github.com/ramhiser/datamicroarray/raw/master/data/"
+
+if( !dir.exists(data_dir) ){
+  dir.create(path = data_dir)
+}
+if( !file.exists(str_c(data_dir, data_file)) ){
+  download.file(
+    url = str_c(data_loc, data_file),
+    destfile = str_c(data_dir, data_file))
+}
+load(file = str_c(data_dir, data_file))
+
+gravier_x <- gravier$x |>
+  as_tibble()
+
+gravier_all <- gravier |> 
+  bind_cols() |>
+  as_tibble() |> 
+  relocate(early_metastasis = y)
+```
+
+## PCA
+
+To make sure that we use numerical data, we select only the numerical columns. As expected, the number of columns is the same as before (2905 columns). With scale() we now center all column data around 0 and scale them to have a standard deviation of 1, so that the magnitude of the column values does not introduce a bias in the PCA directions. Now the dataset is ready for analysis and we perform PCA with the function prcomp().
+
+```{r}
+
+gravier_PCA <- gravier_x |> 
+  select(where(is.numeric)) |>
+  scale() |> 
+  prcomp()
+
+```
+
+## Plot PCA projection onto first 2 principle components
+
+The function augment() takes the PCA dataset and the full original dataset with the prognosis information and adds columns with data computed during PCA. In this case these are the projections of each data point onto the principle components, which was computed by multiplying each original data point with the eigenvector corresponding to each principle component. The output of the function is a tibble similar to gravier_all but with all projections (fittedPC1, fittedPC2, ...) added as columns at the end of the dataset
+
+We now use the projections onto the first two principle components as x and y for a scatterplot and color the points according to prognosis. If the two first principle components are able to separate the dataset according to prognosis, we should see two distinct clouds of data points.
+
+```{r}
+
+gravier_PCA |> 
+  augment(gravier_all) |> 
+  ggplot(aes(.fittedPC1, 
+             .fittedPC2, 
+             color = early_metastasis)
+         ) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c(poor = "#D55E00", 
+               good = "#0072B2")
+    ) +
+  theme_light()+
+  labs(
+    title = "Projection onto two first Principle Components",
+    x = "PC1",
+    y = "PC2",
+    colour = "Prognosis")
+  
+```
+
+We can see that the first two principle components are unable to separate the two prognosis classes.
+
+## Plot rotation matrix
+
+We now extract the rotation matrix from gravier_PCA with the tidy() function, which returns a tibble. We transform the tibble with pivot_wide to have one column for each PCs and one row for each gene. However, if we try to plot now, we see a big smudge of color in the plot and nothing else, as we have 2905 genes of which the eigenvectors are plotted. To make a readable plot, we have to reduce the amount of genes we show. We take only the top 10 genes that have the greatest effect on the principal components. We calculate them by adding the absolute principal direction values (eigenvectors), because we are most interested in the genes showing the strongest associations with the principle components in both directions. We can use arrange(), which orders tibble rows according to the column values, and take the head(n=10) rows.
+
+```{r}
+gravier_PCA |> 
+  tidy(matrix = "rotation")
+
+
+#define arrow style
+arrow_style <- arrow(
+  angle = 20, ends = "first", type = "closed", length = grid::unit(8, "pt")
+)
+
+#plot
+gravier_rotation <- gravier_PCA |> 
+  tidy(matrix = "rotation") |> 
+  pivot_wider(names_from = "PC", names_prefix = "PC", values_from = "value") 
+  gravier_rotation |> 
+    mutate(combined = abs(PC1)+abs(PC2)) |> 
+    arrange(desc(combined)) |> 
+    head(n=10) |> 
+  ggplot(aes(PC1, PC2)) +
+  geom_segment(xend = 0, yend = 0, arrow = arrow_style) +
+  geom_text_repel(
+    aes(label = column),
+    hjust = 1, nudge_x = -0.02, 
+    color = "4682B4"
+  ) +
+  xlim(-0.085,0.01) + ylim(-0.07, 0.01) +
+  coord_fixed() + # fix aspect ratio to 1:1
+  theme_minimal()
+```
+
+## Variance explained
+
+We extract the eigenvalues for calculating the variance explained by each principle component. We can see right away that even the first principle component can only explain around 8 percent of the data's variability. We would need at least 77 principal components to explain 90 % of the variability, which is a substantial reduction in dimensions as compared to several thousands, however it does not make our data easier to plot.
+
+```{r}
+
+gravier_PCA |> 
+  tidy(matrix = "eigenvalues")
+```
+
+Now we plot the variance explained.
+
+```{r}
+gravier_PCA |> 
+  tidy(matrix = "eigenvalues") |> 
+  head(n=10) |> 
+  ggplot(aes(PC, percent)) +
+  geom_col(fill = "blue", alpha = 0.8) +
+  scale_x_continuous(breaks = 1:10) +
+  scale_y_continuous(
+    labels = scales::percent_format(),
+    expand = expansion(mult = c(0, 0.01))
+  ) +
+  theme_minimal()+
+  labs(title = "Variance explained by first 10 principal components")
+```
+
+We can see that no single principle component explains a majority of the data variance.
